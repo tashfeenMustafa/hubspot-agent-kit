@@ -15,20 +15,9 @@ cd hubspot-agent-kit
 ./setup
 ```
 
-Then add this snippet to your project's `CLAUDE.md` (or `AGENTS.md` / `GEMINI.md`):
-
-```markdown
-## HubSpot Agent Kit
-
-HubSpot skills are in `skills/` — read the relevant SKILL.md before any HubSpot task.
-
-Available slash commands:
-/hs-audit   /hs-build   /hs-deals   /hs-meetings   /hs-utm
-/hs-crm     /hs-calls   /hs-pages   /hs-normalize  /hs-hygiene
-
-Rules for auditing are in rules/INDEX.md.
-Scripts are in scripts/. Always run with DRY_RUN=true first.
-```
+The kit includes `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` at the repo root. If you clone
+into your project directory they are picked up automatically. If you install into
+`~/.claude/skills/hubspot-agent-kit/` you can symlink or copy `CLAUDE.md` to your project root.
 
 ## Slash Commands
 

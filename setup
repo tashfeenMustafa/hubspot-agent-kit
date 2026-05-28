@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Detect OS
 OS="$(uname -s)"
 
@@ -30,7 +32,7 @@ mkdir -p "$KIT_DIR"
 ENV_FILE="$KIT_DIR/.env"
 if [ ! -f "$ENV_FILE" ]; then
     echo "Copying .env.example to $ENV_FILE"
-    cp D:/tashf/Documents/GitHub/hubspot-agent-kit/.env.example "$ENV_FILE"
+    cp "$SCRIPT_DIR/.env.example" "$ENV_FILE"
 else
     echo ".env file already exists at $ENV_FILE, skipping copy."
 fi
@@ -39,42 +41,21 @@ fi
 echo ""
 echo "==================================================="
 echo "HubSpot Agent Kit Setup Complete!"
+echo ""
 echo "Next steps:"
-echo "1. Edit $ENV_FILE and set your HUBSPOT_API_KEY, HUBSPOT_PORTAL_ID, and other variables."
-echo "2. Add the following snippet to your Claude Code agent's system prompt or equivalent:"
+echo "1. Edit $ENV_FILE and set HUBSPOT_API_KEY and HUBSPOT_PORTAL_ID."
 echo ""
-echo '```markdown'
-echo '## Claude Code Integration'
-echo ''
-echo 'When working on any HubSpot-related task, always use the `hubspot-agent-kit` skills.'
-echo ''
-echo '### Available Commands:'
-echo ''
-echo '*   `/hs-audit`: Audit all workflows — score every flow against 38 production-tested rules.'
-echo '*   `/hs-build`: Describe a workflow in plain English, get it built and deployed.'
-echo '*   `/hs-deals`: Create deals, associate contacts, move pipeline stages.'
-echo '*   `/hs-meetings`: Backfill meeting types, infer outcomes, manage scheduling pages.'
-echo '*   `/hs-utm`: Audit UTM data, build normalization workflows for Meta/Google/LinkedIn.'
-echo '*   `/hs-crm`: Find orphan deals, missing associations, lifecycle stage mismatches.'
-echo '*   `/hs-calls`: Build call disposition routing and lead status automation.'
-echo '*   `/hs-pages`: Download, edit, and publish landing pages.'
-echo '*   `/hs-normalize`: Normalize contact properties in bulk.'
-echo '*   `/hs-hygiene`: Full CRM hygiene pipeline — close ghost deals, clean stale contacts.'
-echo ''
-echo '### Overrides:'
-echo ''
-echo '*   When asked to perform HubSpot-related work, always read the relevant `SKILL.md` file first from the `skills/` directory.'
-echo '*   Never call the HubSpot API directly without first consulting and using the defined skills in this kit.'
-echo '*   **Important:** Always perform a `DRY_RUN` before executing any write operations to HubSpot.'
-echo ''
-echo '### References:'
-echo ''
-echo '*   `scripts/`: Contains Python utilities for various operations.'
-echo '*   `rules/`: Defines the audit rules used by `/hs-audit`.'
-echo '*   `docs/`: Provides documentation on HubSpot API patterns and best practices.'
-echo '```'
+echo "2. Agent context files (CLAUDE.md, AGENTS.md, GEMINI.md) are included"
+echo "   in the kit at: $SCRIPT_DIR"
+echo "   - If you cloned into your project root: they are already active."
+echo "   - If you installed into ~/.claude/skills/: copy or symlink CLAUDE.md"
+echo "     to your project root:"
+echo "     ln -s $SCRIPT_DIR/CLAUDE.md ~/your-project/CLAUDE.md"
 echo ""
+echo "3. Run your first audit:"
+echo "   python $SCRIPT_DIR/scripts/audit/audit_workflows.py --report audit.md"
 echo "==================================================="
 
 # Make the script executable
-chmod +x D:/tashf/Documents/GitHub/hubspot-agent-kit/setup
+chmod +x "$SCRIPT_DIR/setup"
+

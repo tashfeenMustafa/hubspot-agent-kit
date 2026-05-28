@@ -1,21 +1,34 @@
-## Codex/OpenAI Compatibility
+# hubspot-agent-kit — Codex Agent Instructions
 
-This agent kit provides a set of pre-defined skills to interact with HubSpot. Always use these skills when performing HubSpot-related tasks.
+HubSpot operator skill pack. Read `CLAUDE.md` for full context.
 
-### Available Skills and Commands:
+## Rules
 
-*   `/hs-audit`: Audit all workflows — score every flow against 38 production-tested rules.
-*   `/hs-build`: Describe a workflow in plain English, get it built and deployed.
-*   `/hs-deals`: Create deals, associate contacts, move pipeline stages.
-*   `/hs-meetings`: Backfill meeting types, infer outcomes, manage scheduling pages.
-*   `/hs-utm`: Audit UTM data, build normalization workflows for Meta/Google/LinkedIn.
-*   `/hs-crm`: Find orphan deals, missing associations, lifecycle stage mismatches.
-*   `/hs-calls`: Build call disposition routing and lead status automation.
-*   `/hs-pages`: Download, edit, and publish landing pages.
-*   `/hs-normalize`: Normalize contact properties in bulk.
-*   `/hs-hygiene`: Full CRM hygiene pipeline — close ghost deals, clean stale contacts.
+- Read the relevant `skills/*/SKILL.md` before any HubSpot operation
+- Check `docs/api-reference.md` before making API calls
+- Run `scripts/audit/audit_workflows.py` before modifying workflows
+- `DRY_RUN=true` is the default — never write without explicit confirmation
+- Scripts are Python 3.8+ using `requests` and `python-dotenv`
+- Never output `HUBSPOT_API_KEY` in any response
 
-### Usage Guidelines:
+## Skills
 
-*   Skills are defined in the `skills/` directory. Before executing any HubSpot-related action, always read the relevant `SKILL.md` file to understand the skill's capabilities and parameters.
-*   Always perform a `DRY_RUN` before executing any write operations to HubSpot.
+| Command | Skill |
+|---|---|
+| `/hs-audit` | `skills/workflow-audit/SKILL.md` |
+| `/hs-build` | `skills/workflow-build/SKILL.md` |
+| `/hs-deals` | `skills/deal-operations/SKILL.md` |
+| `/hs-meetings` | `skills/meeting-operations/SKILL.md` |
+| `/hs-utm` | `skills/utm-operations/SKILL.md` |
+| `/hs-crm` | `skills/crm-audit/SKILL.md` |
+| `/hs-calls` | `skills/call-routing/SKILL.md` |
+| `/hs-pages` | `skills/landing-pages/SKILL.md` |
+| `/hs-normalize` | `skills/lead-normalization/SKILL.md` |
+| `/hs-hygiene` | `skills/data-hygiene/SKILL.md` |
+
+## Reference
+
+- `rules/INDEX.md` — 38 workflow audit rules
+- `docs/api-reference.md` — HubSpot API endpoints and auth
+- `docs/workflow-patterns.md` — proven automation patterns
+- `docs/data-models.md` — CRM object schemas
