@@ -1,0 +1,16 @@
+.env
+*.env.local
+data/
+logs/
+*.json
+__pycache__/
+.venv/
+venv/
+env/
+*.csv
+audit_snapshots/
+processed/
+raw_exports/
+.DS_Store
+node_modules/
+*.pyc
