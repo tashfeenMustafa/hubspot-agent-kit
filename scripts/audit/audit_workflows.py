@@ -7,6 +7,9 @@ from tabulate import tabulate
 
 load_dotenv()
 
+# Set DISABLE_SSL_VERIFY=true only for local Windows dev with SSL issues. Never in production.
+DISABLE_SSL_VERIFY = os.getenv("DISABLE_SSL_VERIFY", "false").lower() == "true"
+
 HUBSPOT_API_KEY = os.getenv("HUBSPOT_API_KEY")
 HUBSPOT_BASE_URL = os.getenv("HUBSPOT_BASE_URL", "https://api.hubapi.com")
 
@@ -30,7 +33,7 @@ def get_workflows(api_key, base_url):
 
         try:
             # Windows SSL workaround - remove in production
-            response = requests.get(f"{base_url}/automation/v4/flows", headers=headers, params=params, verify=False)
+            response = requests.get(f"{base_url}/automation/v4/flows", headers=headers, params=params, verify=(not DISABLE_SSL_VERIFY))
             response.raise_for_status()
             data = response.json()
             all_workflows.extend(data.get("results", []))

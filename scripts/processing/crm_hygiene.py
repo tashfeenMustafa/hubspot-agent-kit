@@ -8,6 +8,9 @@ from tabulate import tabulate
 
 load_dotenv()
 
+# Set DISABLE_SSL_VERIFY=true only for local Windows dev with SSL issues. Never in production.
+DISABLE_SSL_VERIFY = os.getenv("DISABLE_SSL_VERIFY", "false").lower() == "true"
+
 HUBSPOT_API_KEY = os.getenv("HUBSPOT_API_KEY")
 HUBSPOT_BASE_URL = os.getenv("HUBSPOT_BASE_URL", "https://api.hubapi.com")
 DRY_RUN_DEFAULT = os.getenv("DRY_RUN", "True").lower() == "true"
@@ -39,7 +42,7 @@ def fetch_objects(object_type, api_key, base_url, filters=None, properties=None)
         try:
             # Windows SSL workaround - remove in production
             response = requests.post(f"{base_url}/crm/v3/objects/{object_type}/search", 
-                                     headers=headers, json=search_body, verify=False)
+                                     headers=headers, json=search_body, verify=(not DISABLE_SSL_VERIFY))
             response.raise_for_status()
             data = response.json()
             all_objects.extend(data.get("results", []))
@@ -63,7 +66,7 @@ def check_orphan_deals(api_key, base_url):
         try:
             # Windows SSL workaround - remove in production
             response = requests.get(f"{base_url}/crm/v3/objects/deals/{deal['id']}/associations/contacts",
-                                    headers={"Authorization": f"Bearer {api_key}"}, verify=False)
+                                    headers={"Authorization": f"Bearer {api_key}"}, verify=(not DISABLE_SSL_VERIFY))
             response.raise_for_status()
             associations = response.json()
             if not associations.get("results"):
@@ -89,7 +92,7 @@ def check_missing_associations(api_key, base_url):
         try:
             # Windows SSL workaround - remove in production
             response = requests.get(f"{base_url}/crm/v3/objects/contacts/{contact['id']}/associations/deals",
-                                    headers={"Authorization": f"Bearer {api_key}"}, verify=False)
+                                    headers={"Authorization": f"Bearer {api_key}"}, verify=(not DISABLE_SSL_VERIFY))
             response.raise_for_status()
             associations = response.json()
             if not associations.get("results"):
@@ -171,7 +174,7 @@ def fix_orphan_deals(api_key, base_url, deals_to_fix, dry_run):
         try:
             # Windows SSL workaround - remove in production
             response = requests.post(f"{base_url}/crm/v3/objects/deals/batch/update", 
-                                     headers=headers, json=batch_payload, verify=False)
+                                     headers=headers, json=batch_payload, verify=(not DISABLE_SSL_VERIFY))
             response.raise_for_status()
             print(f"Successfully closed {len(batch)} orphan deals.")
         except requests.exceptions.RequestException as e:
@@ -196,7 +199,7 @@ def fix_zombie_contacts(api_key, base_url, contacts_to_fix, dry_run):
         try:
             # Windows SSL workaround - remove in production
             response = requests.post(f"{base_url}/crm/v3/objects/contacts/batch/update", 
-                                     headers=headers, json=batch_payload, verify=False)
+                                     headers=headers, json=batch_payload, verify=(not DISABLE_SSL_VERIFY))
             response.raise_for_status()
             print(f"Successfully updated {len(batch)} zombie contacts to 'Stale Lead'.")
         except requests.exceptions.RequestException as e:

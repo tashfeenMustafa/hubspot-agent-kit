@@ -8,6 +8,9 @@ from ..audit import fetch_portal_context # Import relative to scripts/
 
 load_dotenv()
 
+# Set DISABLE_SSL_VERIFY=true only for local Windows dev with SSL issues. Never in production.
+DISABLE_SSL_VERIFY = os.getenv("DISABLE_SSL_VERIFY", "false").lower() == "true"
+
 HUBSPOT_API_KEY = os.getenv("HUBSPOT_API_KEY")
 HUBSPOT_BASE_URL = os.getenv("HUBSPOT_BASE_URL", "https://api.hubapi.com")
 
@@ -61,7 +64,7 @@ def fetch_workflow_by_id(workflow_id, api_key, base_url):
     headers = {"Authorization": f"Bearer {api_key}"}
     try:
         # Windows SSL workaround - remove in production
-        response = requests.get(f"{base_url}/automation/v4/flows/{workflow_id}", headers=headers, verify=False)
+        response = requests.get(f"{base_url}/automation/v4/flows/{workflow_id}", headers=headers, verify=(not DISABLE_SSL_VERIFY))
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:

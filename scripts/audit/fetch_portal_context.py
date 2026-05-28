@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Set DISABLE_SSL_VERIFY=true only for local Windows dev with SSL issues. Never in production.
+DISABLE_SSL_VERIFY = os.getenv("DISABLE_SSL_VERIFY", "false").lower() == "true"
+
 HUBSPOT_API_KEY = os.getenv("HUBSPOT_API_KEY")
 HUBSPOT_BASE_URL = os.getenv("HUBSPOT_BASE_URL", "https://api.hubapi.com")
 
@@ -18,7 +21,7 @@ def fetch_data(url, api_key, params=None):
     headers = {"Authorization": f"Bearer {api_key}"}
     try:
         # Windows SSL workaround - remove in production
-        response = requests.get(url, headers=headers, params=params, verify=False)
+        response = requests.get(url, headers=headers, params=params, verify=(not DISABLE_SSL_VERIFY))
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:

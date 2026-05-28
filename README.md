@@ -15,6 +15,21 @@ cd hubspot-agent-kit
 ./setup
 ```
 
+Then add this snippet to your project's `CLAUDE.md` (or `AGENTS.md` / `GEMINI.md`):
+
+```markdown
+## HubSpot Agent Kit
+
+HubSpot skills are in `skills/` — read the relevant SKILL.md before any HubSpot task.
+
+Available slash commands:
+/hs-audit   /hs-build   /hs-deals   /hs-meetings   /hs-utm
+/hs-crm     /hs-calls   /hs-pages   /hs-normalize  /hs-hygiene
+
+Rules for auditing are in rules/INDEX.md.
+Scripts are in scripts/. Always run with DRY_RUN=true first.
+```
+
 ## Slash Commands
 
 | Command | What it does |

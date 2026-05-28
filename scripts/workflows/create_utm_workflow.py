@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Set DISABLE_SSL_VERIFY=true only for local Windows dev with SSL issues. Never in production.
+DISABLE_SSL_VERIFY = os.getenv("DISABLE_SSL_VERIFY", "false").lower() == "true"
+
 HUBSPOT_API_KEY = os.getenv("HUBSPOT_API_KEY")
 HUBSPOT_BASE_URL = os.getenv("HUBSPOT_BASE_URL", "https://api.hubapi.com")
 DRY_RUN_DEFAULT = os.getenv("DRY_RUN", "True").lower() == "true"
@@ -94,7 +97,7 @@ def create_workflow(api_key, base_url, payload, dry_run):
 
     try:
         # Windows SSL workaround - remove in production
-        response = requests.post(f"{base_url}/automation/v4/flows", headers=headers, json=payload, verify=False)
+        response = requests.post(f"{base_url}/automation/v4/flows", headers=headers, json=payload, verify=(not DISABLE_SSL_VERIFY))
         response.raise_for_status()
         print("Workflow created successfully:")
         print(json.dumps(response.json(), indent=2))

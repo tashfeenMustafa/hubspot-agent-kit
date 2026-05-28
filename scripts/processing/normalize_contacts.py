@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Set DISABLE_SSL_VERIFY=true only for local Windows dev with SSL issues. Never in production.
+DISABLE_SSL_VERIFY = os.getenv("DISABLE_SSL_VERIFY", "false").lower() == "true"
+
 HUBSPOT_API_KEY = os.getenv("HUBSPOT_API_KEY")
 HUBSPOT_BASE_URL = os.getenv("HUBSPOT_BASE_URL", "https://api.hubapi.com")
 DRY_RUN_DEFAULT = os.getenv("DRY_RUN", "True").lower() == "true"
@@ -105,7 +108,7 @@ def search_contacts(api_key, base_url, property_name):
         try:
             # Windows SSL workaround - remove in production
             response = requests.post(f"{base_url}/crm/v3/objects/contacts/search", 
-                                     headers=headers, json=search_body, verify=False)
+                                     headers=headers, json=search_body, verify=(not DISABLE_SSL_VERIFY))
             response.raise_for_status()
             data = response.json()
             all_contacts.extend(data.get("results", []))
@@ -144,7 +147,7 @@ def batch_update_contacts(api_key, base_url, updates, dry_run):
         try:
             # Windows SSL workaround - remove in production
             response = requests.post(f"{base_url}/crm/v3/objects/contacts/batch/update", 
-                                     headers=headers, json=batch_payload, verify=False)
+                                     headers=headers, json=batch_payload, verify=(not DISABLE_SSL_VERIFY))
             response.raise_for_status()
             print(f"Successfully updated {len(batch)} contacts.")
         except requests.exceptions.RequestException as e:
