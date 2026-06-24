@@ -1,0 +1,5 @@
+# Search/index ignore (ripgrep, ag, editors). Keep dev-only tooling out of
+# codebase searches so it doesn't pollute results.
+
+# Dev-only Matt-Pocock SDLC skills — vendored for development, not part of the project.
+.claude/skills/dev-sdlc/

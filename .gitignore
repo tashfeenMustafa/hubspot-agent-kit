@@ -1,0 +1,40 @@
+# --- Secrets / env ---
+.env
+.env.*
+*.env.local
+!.env.example
+
+# --- Live portal config (users keep their own; repo ships examples/ only) ---
+portal-profile.yaml
+
+# --- Python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# --- Node (plugin / skills tooling) ---
+node_modules/
+
+# --- Runtime output (ignore by directory, NOT by extension) ---
+data/
+logs/
+out/
+reports/
+audit_snapshots/
+processed/
+raw_exports/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Dev-only Matt-Pocock SDLC skills (vendored, never shipped/committed) ---
+.claude/skills/dev-sdlc/
