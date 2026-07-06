@@ -79,17 +79,38 @@ def _iter_files(paths: Iterable[str]) -> Iterable[Path]:
             yield root
             continue
         for p in root.rglob("*"):
-            if p.is_file() and not (_SKIP_DIRS & set(p.parts)):
+            # Skip-dir names are matched only *below* the scan root, so a skip
+            # word in an ancestor (e.g. a checkout under .../build/) can't
+            # silently disable the whole scan.
+            if p.is_file() and not (_SKIP_DIRS & set(p.relative_to(root).parts)):
                 yield p
+
+
+def _read_text(path: Path) -> str | None:
+    """Decode a file to text, or None if unreadable.
+
+    A security gate must not skip a file just because it is not UTF-8: PowerShell
+    writes UTF-16 by default. Try UTF-8 (with BOM) then UTF-16, then fall back to
+    latin-1 (which maps every byte), so a real secret cannot hide behind an
+    encoding the naive reader chokes on.
+    """
+    try:
+        raw = path.read_bytes()
+    except OSError:
+        return None
+    for enc in ("utf-8-sig", "utf-16"):
+        try:
+            return raw.decode(enc)
+        except UnicodeError:
+            continue
+    return raw.decode("latin-1", errors="replace")
 
 
 def scan_paths(paths: Iterable[str]) -> list[Finding]:
     findings: list[Finding] = []
     for file in _iter_files(paths):
-        try:
-            text = file.read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError):
-            # Unreadable or binary — nothing textual to leak.
+        text = _read_text(file)
+        if text is None:
             continue
         findings.extend(scan_text(text, path=str(file)))
     return findings
@@ -98,6 +119,11 @@ def scan_paths(paths: Iterable[str]) -> list[Finding]:
 def main(argv: Sequence[str] | None = None) -> int:
     args = list(argv) if argv is not None else sys.argv[1:]
     paths = args or ["."]
+    missing = [p for p in paths if not Path(p).exists()]
+    if missing:
+        # A misconfigured path must fail the gate, not silently scan nothing.
+        print(f"PII/secret scan: path(s) not found: {', '.join(missing)}", file=sys.stderr)
+        return 2
     findings = scan_paths(paths)
     for f in findings:
         print(f"{f.path}:{f.line}: {f.kind}: {f.match}", file=sys.stderr)

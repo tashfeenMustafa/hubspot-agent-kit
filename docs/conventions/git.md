@@ -109,15 +109,20 @@ public — see the PRD), so server-side enforcement is **not active yet**. Until
 then the discipline is enforced by convention + the branch-delete hook + the
 mandatory human merge gate.
 
-Activate the moment the repo is public or on Pro:
+Activate the moment the repo is public or on Pro. This endpoint needs a nested
+JSON body, so pass `--input` (not `-F`, which sends flat literal keys), and use
+`{owner}/{repo}` placeholders (gh does not expand REST-doc `:owner` colons). The
+required-check context is the CI **job name**, `lint · type · test · pii-scan`:
 
 ```sh
-gh api -X PUT repos/:owner/:repo/branches/main/protection \
-  -F required_status_checks.strict=true \
-  -F 'required_status_checks.contexts[]=lint · type · test · pii-scan' \
-  -F enforce_admins=true \
-  -F required_pull_request_reviews.required_approving_review_count=0 \
-  -F restrictions=  # null: no push restrictions
+gh api -X PUT repos/{owner}/{repo}/branches/main/protection --input - <<'JSON'
+{
+  "required_status_checks": { "strict": true, "contexts": ["lint · type · test · pii-scan"] },
+  "enforce_admins": true,
+  "required_pull_request_reviews": { "required_approving_review_count": 0 },
+  "restrictions": null
+}
+JSON
 # verify:
-gh api repos/:owner/:repo/branches/main/protection --jq '.required_status_checks.contexts'
+gh api repos/{owner}/{repo}/branches/main/protection --jq '.required_status_checks.contexts'
 ```

@@ -57,3 +57,25 @@ def test_main_returns_one_when_secret_found(tmp_path: Path) -> None:
     email = "leak@" + "corp.example"
     (tmp_path / "bad.py").write_text(f"owner = '{email}'\n", encoding="utf-8")
     assert secret_scan.main([str(tmp_path)]) == 1
+
+
+def test_detects_secret_in_utf16_file(tmp_path: Path) -> None:
+    """UTF-16 (PowerShell's default) must not slip past the gate as undecodable."""
+    email = "leak@" + "corp.example"
+    (tmp_path / "u16.txt").write_text(f"owner = '{email}'\n", encoding="utf-16")
+    assert secret_scan.main([str(tmp_path)]) == 1
+
+
+def test_main_errors_on_missing_path(tmp_path: Path) -> None:
+    """A mistyped/absent path must fail loudly, not silently pass the gate."""
+    missing = tmp_path / "does-not-exist"
+    assert secret_scan.main([str(missing)]) != 0
+
+
+def test_skip_dir_only_below_root_not_ancestor(tmp_path: Path) -> None:
+    """A skip-dir name in an ancestor of the scan root must not disable scanning."""
+    root = tmp_path / "build" / "repo"  # 'build' is a skip-dir name, as an ancestor
+    root.mkdir(parents=True)
+    email = "leak@" + "corp.example"
+    (root / "code.py").write_text(f"owner = '{email}'\n", encoding="utf-8")
+    assert secret_scan.main([str(root)]) == 1
