@@ -97,10 +97,27 @@ Qodo/etc.). The path from `/implement` to merge:
 
 ## Branch protection
 
-`main` (and `staging`) require the CI `gates` check to pass and require a PR —
-no direct pushes. Because auto-merge is forbidden on write-path code, the human
-gate is a review discipline, not just a GitHub setting. Configure/verify with:
+**Target:** `main` (and `staging`) require the CI `gates` check to pass and
+require a PR — no direct pushes, no force-push, no deletion. Because auto-merge
+is forbidden on write-path code, the human gate is a review discipline, not just
+a GitHub setting.
+
+**Status — pending (plan-gated).** GitHub only allows branch protection /
+rulesets on **public** repos or **private repos on a paid plan**. This repo is
+private on the free plan (the v1 history PII audit must complete before it goes
+public — see the PRD), so server-side enforcement is **not active yet**. Until
+then the discipline is enforced by convention + the branch-delete hook + the
+mandatory human merge gate.
+
+Activate the moment the repo is public or on Pro:
 
 ```sh
+gh api -X PUT repos/:owner/:repo/branches/main/protection \
+  -F required_status_checks.strict=true \
+  -F 'required_status_checks.contexts[]=lint · type · test · pii-scan' \
+  -F enforce_admins=true \
+  -F required_pull_request_reviews.required_approving_review_count=0 \
+  -F restrictions=  # null: no push restrictions
+# verify:
 gh api repos/:owner/:repo/branches/main/protection --jq '.required_status_checks.contexts'
 ```
