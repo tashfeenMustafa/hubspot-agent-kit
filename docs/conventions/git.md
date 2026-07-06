@@ -1,8 +1,7 @@
 # Git conventions
 
-> Scope note: this file will be expanded in issue #5 (P0) with the full CI +
-> review-gate discipline. It currently records the branch/merge safety rules,
-> which are enforced by a hook (see below), not just documented.
+> This file records the branch/merge safety rules (enforced by a hook, see
+> below) and the CI + owned review-gate discipline every PR passes through.
 
 ## Branch & merge safety (enforced)
 
@@ -45,3 +44,85 @@ Commits are not lost when a branch is deleted:
   `git fetch origin refs/pull/<n>/head`.
 
 Recreate the branch at that SHA, push it, then `gh pr reopen <n>`.
+
+## CI gates (blocking)
+
+Every push to `main`/`staging` and every PR runs `.github/workflows/ci.yml`.
+All five steps are **blocking** — a red step blocks merge:
+
+1. **Ruff** — `ruff check src tests` (lint).
+2. **Black** — `black --check src tests` (format).
+3. **Mypy** — `mypy` (strict, from `pyproject.toml`).
+4. **Pytest** — `pytest -q` (full suite).
+5. **PII/secret scan** — `python -m hubspot_agent_kit.ci.secret_scan .`
+
+Run the same gates locally before pushing (see the commands above, via `.venv`).
+
+### PII/secret scanner
+
+`hubspot_agent_kit.ci.secret_scan` fails the build if it finds the shape of data
+that must never land in this public repo: email addresses, UUIDs, HubSpot
+`pat-` private-app tokens, and labeled `portalId`/`hubId` values. Bare integers
+are not flagged. To keep an intentional example (a fabricated fixture, a doc
+sample), put `pii-allow` on that line and the scanner skips it. Never use it to
+smuggle real client data — client specifics live only in the private engine and
+as scrubbed `examples/`.
+
+## Owned review-gate
+
+Review tooling is **owned-only — no external SaaS bot** (no Greptile/CodeRabbit/
+Qodo/etc.). The path from `/implement` to merge:
+
+```
+/implement (TDD, fresh session per issue)
+  → push PR
+  → CI gates          (lint · type · test · PII/secret scan)   ← deterministic, blocking
+  → AI review-loop    (owned only)                             ← judgment
+  → human gate        (mandatory)                              → merge → staging → main
+```
+
+- **`/code-review`** — reviews the diff for correctness + reuse/simplification/
+  efficiency. `--comment` posts inline PR comments; `--fix` applies fixes.
+- **`superpowers:requesting-code-review` / `receiving-code-review`** — the
+  disciplined request → address → re-verify loop.
+
+**Rules of the loop:**
+
+- **Cap iterations; don't chase a score.** A human makes the final merge call —
+  don't Goodhart any confidence metric.
+- **Auto-merge is forbidden on write-path / remediation code.** Anything that can
+  mutate a live CRM gets mandatory human review before merge.
+- Keep PRs **minimal/stacked** so each has a single review surface. Branch flow
+  is `staging → main`.
+
+## Branch protection
+
+**Target:** `main` (and `staging`) require the CI `gates` check to pass and
+require a PR — no direct pushes, no force-push, no deletion. Because auto-merge
+is forbidden on write-path code, the human gate is a review discipline, not just
+a GitHub setting.
+
+**Status — ACTIVE** (since 2026-07-07, when the repo went public — see
+`docs/decisions/2026-07-07-repo-public.md`). `main` enforces: the required
+status check `lint · type · test · pii-scan`, strict up-to-date, `enforce_admins`
+on, no force-push, no deletion, PR required. The convention layer (no auto-merge
+on write-path, mandatory human merge, branch-delete hook) still applies on top.
+
+To re-apply or verify (the command that set it — GitHub only allows this on
+public repos or private repos on a paid plan). It needs a nested JSON body, so
+pass `--input` (not `-F`, which sends flat literal keys), and use
+`{owner}/{repo}` placeholders (gh does not expand REST-doc `:owner` colons). The
+required-check context is the CI **job name**, `lint · type · test · pii-scan`:
+
+```sh
+gh api -X PUT repos/{owner}/{repo}/branches/main/protection --input - <<'JSON'
+{
+  "required_status_checks": { "strict": true, "contexts": ["lint · type · test · pii-scan"] },
+  "enforce_admins": true,
+  "required_pull_request_reviews": { "required_approving_review_count": 0 },
+  "restrictions": null
+}
+JSON
+# verify:
+gh api repos/{owner}/{repo}/branches/main/protection --jq '.required_status_checks.contexts'
+```

@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+
+# Cancel superseded runs on the same ref to save minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    name: lint · type · test · pii-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: python -m pip install --upgrade pip && pip install -e ".[dev]"
+
+      # Each gate is a separate, blocking step so a failure names itself.
+      - name: Ruff (lint)
+        run: ruff check src tests
+
+      - name: Black (format)
+        run: black --check src tests
+
+      - name: Mypy (types, strict)
+        run: mypy
+
+      - name: Pytest
+        run: pytest -q
+
+      - name: PII/secret scan
+        run: python -m hubspot_agent_kit.ci.secret_scan .
