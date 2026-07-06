@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git *)",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-branch-delete.py\"",
+            "timeout": 15,
+            "statusMessage": "Checking branch-delete safety"
+          }
+        ]
+      }
+    ]
+  }
+}
