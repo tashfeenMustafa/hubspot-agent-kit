@@ -102,15 +102,15 @@ require a PR — no direct pushes, no force-push, no deletion. Because auto-merg
 is forbidden on write-path code, the human gate is a review discipline, not just
 a GitHub setting.
 
-**Status — pending (plan-gated).** GitHub only allows branch protection /
-rulesets on **public** repos or **private repos on a paid plan**. This repo is
-private on the free plan (the v1 history PII audit must complete before it goes
-public — see the PRD), so server-side enforcement is **not active yet**. Until
-then the discipline is enforced by convention + the branch-delete hook + the
-mandatory human merge gate.
+**Status — ACTIVE** (since 2026-07-07, when the repo went public — see
+`docs/decisions/2026-07-07-repo-public.md`). `main` enforces: the required
+status check `lint · type · test · pii-scan`, strict up-to-date, `enforce_admins`
+on, no force-push, no deletion, PR required. The convention layer (no auto-merge
+on write-path, mandatory human merge, branch-delete hook) still applies on top.
 
-Activate the moment the repo is public or on Pro. This endpoint needs a nested
-JSON body, so pass `--input` (not `-F`, which sends flat literal keys), and use
+To re-apply or verify (the command that set it — GitHub only allows this on
+public repos or private repos on a paid plan). It needs a nested JSON body, so
+pass `--input` (not `-F`, which sends flat literal keys), and use
 `{owner}/{repo}` placeholders (gh does not expand REST-doc `:owner` colons). The
 required-check context is the CI **job name**, `lint · type · test · pii-scan`:
 
