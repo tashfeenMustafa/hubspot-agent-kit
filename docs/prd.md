@@ -3,6 +3,7 @@
 > Status: Draft v1 · Generated via the `write-a-prd` workflow after a 16-question grilling session.
 > This is the **destination document**. It is intentionally not a line-by-line implementation spec —
 > phase plans and vertical-slice issues (`prd-to-issues`) derive from it.
+> Tracker = **GitHub Issues** (this file is the only planning doc committed to the repo).
 
 ---
 
@@ -157,11 +158,34 @@ All four are covered in the READMEs and in functionality.
 
 ---
 
+## SDLC & Review Gate
+
+Every vertical-slice issue is a **small, stacked PR** (minimal PRs = our vertical slices). The per-issue path from `/implement` to merge:
+
+```
+/implement (TDD, fresh session per issue)
+  → push PR
+  → CI gates            (lint · type · test · PII/secret scan)     ← deterministic, blocking
+  → AI review-loop      (owned only)                                ← judgment
+  → human gate          (mandatory)                                 → merge → staging → main
+```
+
+- **Owned-only review tooling — no external SaaS bot:**
+  - **`/code-review`** — reviews the diff for correctness + reuse/simplification/efficiency; `--comment` posts inline PR comments, `--fix` applies fixes.
+  - **`superpowers:requesting-code-review` / `receiving-code-review`** — the disciplined request → address → re-verify loop (our owned equivalent of a "review-until-passing" loop).
+- **Rules of the loop:**
+  - **Cap iterations** and don't chase a score — a human makes the final merge call (avoid Goodharting any confidence metric).
+  - **Auto-merge is forbidden on write-path / remediation code** — anything that can mutate a live CRM gets a mandatory human review before merge.
+  - Keep PRs minimal/stacked so each has a single review surface; branch flow is **staging → main**.
+- Set up in **P0** (CI gates + branch protection + review-gate discipline), applied from the first PR onward.
+
+---
+
 ## Phasing Roadmap
 
 | Phase | Vertical slice |
 |---|---|
-| **P0 Foundation** | plugin scaffold, `CLAUDE/AGENTS/GEMINI`, conventions docs, `settings.json` + write-guard hook, CI (lint/type/test/PII-scan), python package skeleton, vendored dev SDLC skills |
+| **P0 Foundation** | plugin scaffold, `CLAUDE/AGENTS/GEMINI`, conventions docs, `settings.json` + write-guard hook, CI (lint/type/test/PII-scan) + branch protection + **owned review-gate**, python package skeleton, vendored dev SDLC skills |
 | **P1 Data seam** | `hubspot_client` interface + REST adapter + in-memory fake + contract suite |
 | **P2 Tracer bullet** | discover workflows → one universal workflow audit → report (thin end-to-end proof) |
 | **P3 Discovery + profile bootstrap** | full enumeration → draft `portal-profile.yaml` → user ratifies |
@@ -173,7 +197,7 @@ All four are covered in the READMEs and in functionality.
 
 Order is dependency-driven. Discovery/Grading/Operation are **co-equal in value** but Operation depends on the seam + findings. A thin dry-run operate slice may be pulled into P2 if desired.
 
-`prd-to-issues` will break each phase into independently-grabbable vertical-slice issues (`issues/NNN-*.md`), tagged HITL/AFK.
+`prd-to-issues` will break each phase into independently-grabbable vertical-slice issues, published as **GitHub Issues** (milestones = phases P0–P8; labels = `type:AFK|HITL`, `area:core|audit|operate|knowledge`, optional `priority:*`; blockers via "Blocked by #N"). Issues are tracker objects, **not** committed files.
 
 ---
 
@@ -182,6 +206,7 @@ Order is dependency-driven. Discovery/Grading/Operation are **co-equal in value*
 - Re-implementing CRUD/auth/pagination plumbing that the HubSpot Agent CLI/MCP already provide *as a goal in itself* — the kit drives them; it competes on **judgment**, not plumbing.
 - Shipping any client-specific values, IDs, owner names, GUIDs, or PII (those exist only in the private engine and as scrubbed `examples/`).
 - An autonomous unattended write-loop ("Ralph"-style product feature) — explicitly dropped.
+- External SaaS code-review bots (Greptile/CodeRabbit/Qodo/etc.) — review stays **owned-only** (`/code-review` + superpowers).
 - A hosted SaaS / multi-tenant service, billing, or a web app (CLI/agent + reports only for now; dashboards are later-phase, optional).
 - Non-HubSpot CRMs.
 
@@ -189,8 +214,9 @@ Order is dependency-driven. Discovery/Grading/Operation are **co-equal in value*
 
 ## Further Notes / Open Questions
 
+- **Tracker = GitHub Issues** (repo private for now). This PRD (`docs/prd.md`) is the only planning doc committed to the repo; issues live in GitHub, not as files.
 - **Marketplace timing:** plugin-marketplace publish is part of P8; confirm whether an earlier private marketplace is wanted.
-- **Empty working tree:** the v1 repo's 92 files currently exist only in git HEAD (`07bb7c4`), deleted from disk. Decide at scaffold time whether to `git restore` and refactor v1 in place, or scaffold fresh and cherry-pick. (Not done in this PRD step.)
-- **`issues/` tracking:** kept in-repo as the planning record (PRD + generated issues); revisit if dock-rot becomes a concern.
+- **Empty working tree / v1:** v1's files are preserved at tag `v1-archive` (branch `archive/v1`). "Scaffold fresh + cherry-pick" — lift generalized skills/rules and REST primitives from the archive per-issue.
+- **Before going public:** audit the **full v1 git history** (reachable via `archive/v1`) for PII/secrets; rewrite/squash if needed while private.
 - **Sandbox portal:** E2E needs a dedicated HubSpot developer test account — provision before P1 work that touches adapters.
 - The 16 grilling decisions behind this PRD are recorded in the conversation; key ones are reflected inline above.
