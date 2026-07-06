@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hubspot-agent-kit"
-version = "0.0.0"
+dynamic = ["version"]
 description = "Standalone, portal-agnostic toolkit that learns, grades, and operates on HubSpot portals for agentic use."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -19,6 +19,9 @@ dev = [
     "mypy>=1.11",
     "pytest>=8.0",
 ]
+
+[tool.hatch.version]
+path = "src/hubspot_agent_kit/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/hubspot_agent_kit"]
